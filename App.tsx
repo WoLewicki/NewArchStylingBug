@@ -6,7 +6,7 @@ export default function App() {
 
   return (
     <View style={{paddingTop: 100}}>
-      <View accessibilityElementsHidden={test}>
+      <View collapsable={test}>
         <Button title="Click me" onPress={() => setTest(!test)} />
         <View style={{position: 'absolute', zIndex: -1}} />
       </View>

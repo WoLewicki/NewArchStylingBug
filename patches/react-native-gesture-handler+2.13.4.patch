@@ -1,0 +1,68 @@
+diff --git a/node_modules/react-native-gesture-handler/android/build.gradle b/node_modules/react-native-gesture-handler/android/build.gradle
+index 3aff335..8f5b495 100644
+--- a/node_modules/react-native-gesture-handler/android/build.gradle
++++ b/node_modules/react-native-gesture-handler/android/build.gradle
+@@ -138,6 +138,7 @@ android {
+                 cmake {
+                     cppFlags "-O2", "-frtti", "-fexceptions", "-Wall", "-Werror", "-std=c++17", "-DANDROID"
+                     arguments "-DAPP_BUILD_DIR=${appProject.buildDir}",
++                        "-DREACT_NATIVE_MINOR_VERSION=${REACT_NATIVE_MINOR_VERSION}",
+                         "-DREACT_NATIVE_DIR=${REACT_NATIVE_DIR}",
+                         "-DANDROID_STL=c++_shared"
+                     abiFilters (*reactNativeArchitectures())
+diff --git a/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerModule.kt b/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerModule.kt
+index 2e831b7..bc5c1fa 100644
+--- a/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerModule.kt
++++ b/node_modules/react-native-gesture-handler/android/src/main/java/com/swmansion/gesturehandler/react/RNGestureHandlerModule.kt
+@@ -467,7 +467,7 @@ class RNGestureHandlerModule(reactContext: ReactApplicationContext?) :
+     return try {
+       SoLoader.loadLibrary("gesturehandler")
+       val jsContext = reactApplicationContext.javaScriptContextHolder
+-      decorateRuntime(jsContext.get())
++      decorateRuntime(jsContext!!.get())
+       true
+     } catch (exception: Exception) {
+       Log.w("[RNGestureHandler]", "Could not install JSI bindings.")
+diff --git a/node_modules/react-native-gesture-handler/android/src/main/jni/CMakeLists.txt b/node_modules/react-native-gesture-handler/android/src/main/jni/CMakeLists.txt
+index ffb82e9..74dd773 100644
+--- a/node_modules/react-native-gesture-handler/android/src/main/jni/CMakeLists.txt
++++ b/node_modules/react-native-gesture-handler/android/src/main/jni/CMakeLists.txt
+@@ -2,24 +2,36 @@ project(GestureHandler)
+ cmake_minimum_required(VERSION 3.9.0)
+ 
+ set(CMAKE_VERBOSE_MAKEFILE ON)
+-set(CMAKE_CXX_STANDARD 17)
++if(${REACT_NATIVE_MINOR_VERSION} GREATER_EQUAL 73)
++    set(CMAKE_CXX_STANDARD 20)
++else()
++    set(CMAKE_CXX_STANDARD 17)
++endif()
+ 
++set(PACKAGE_NAME "gesturehandler")
+ set(REACT_ANDROID_DIR "${REACT_NATIVE_DIR}/ReactAndroid")
+ 
+ include(${REACT_ANDROID_DIR}/cmake-utils/folly-flags.cmake)
+ add_compile_options(${folly_FLAGS})
+ 
+-add_library(gesturehandler
++add_library(${PACKAGE_NAME}
+   SHARED
+   cpp-adapter.cpp
+ )
+ 
++target_include_directories(
++  ${PACKAGE_NAME}
++  PRIVATE
++  "${REACT_NATIVE_DIR}/ReactCommon"
++)
++
+ find_package(ReactAndroid REQUIRED CONFIG)
+ 
+ target_link_libraries(
+   gesturehandler
+   ReactAndroid::react_render_core
+   ReactAndroid::react_render_uimanager
++  ReactAndroid::react_render_graphics
+   ReactAndroid::jsi
+   ReactAndroid::react_nativemodule_core
+ )
